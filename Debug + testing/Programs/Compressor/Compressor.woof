@@ -1,0 +1,44 @@
+function createRepository(projDir, destPath)
+        print("Compressing project...")
+       
+        local destFile = io.open(destPath, "w")
+        addDir(projDir, destFile)
+        destFile:close()
+        print("Repository created.")
+end
+ 
+function addDir(locPath, destFile)
+        local globPath = shell.resolve(".").."/"..locPath
+       
+        print("Constructing dir "..locPath)
+        destFile:write("MKDIR "..locPath.."\n")
+        local dir = fs.list(globPath)
+        for _,v in pairs(dir) do
+                if fs.isDir(globPath.."/"..v) then
+                        addDir(locPath.."/"..v, destFile)
+                else
+                        local file = io.open(globPath.."/"..v)
+                        local lineCount = 0
+                        for line in file:lines() do
+                                lineCount=lineCount+1
+                        end
+                        print("Constructing "..lineCount.." line file: "..v)
+                        destFile:write("MKFIL "..locPath.."/"..v.."\n")
+                        destFile:write("WRITE "..lineCount.."\n")
+                        file:close()
+                        file = io.open(globPath.."/"..v)
+                        for line in file:lines() do
+                                destFile:write(line.."\n")
+                        end
+                        file:close()
+                end
+        end
+end
+ 
+local tArgs = {...}
+if #tArgs < 2 then
+        print("Usage: compress <filepath> <reponame>")
+        return
+end
+ 
+createRepository(shell.resolve(tArgs[1]), shell.resolve(tArgs[2]))

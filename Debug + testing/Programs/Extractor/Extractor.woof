@@ -1,0 +1,38 @@
+function extractRepository(cpfDir, destDir)
+        print("Constructing project...")
+        local file = io.open(cpfDir, "r")
+        local cFile = nil
+        local lc = 0
+       
+        for line in file:lines() do
+                if lc > 0 then
+                        cFile:write(line.."\n")
+                        lc = lc-1
+                        if lc == 0 then
+                                cFile:close()
+                                print("File write complete.")
+                        end
+                elseif string.find(line, "MKDIR") == 1 then
+                        local newDirPath = destDir.."/"..string.sub(line, 7)
+                        if fs.exists(newDirPath) then fs.delete(newDirPath) end
+                        fs.makeDir(newDirPath)
+                        print("Created dir "..newDirPath)
+                elseif string.find(line, "MKFIL") == 1 then
+                        local newFilPath = destDir.."/"..string.sub(line, 7)
+                        if fs.exists(newFilPath) then fs.delete(newFilPath) end
+                        cFile = io.open(newFilPath, "w")
+                        print("Created file "..newFilPath)
+                elseif string.find(line, "WRITE") == 1 then
+                        lc = tonumber(string.sub(line, 7))
+                end
+        end
+        print("Project constructed.")
+end
+ 
+local tArgs = {...}
+if #tArgs < 2 then
+        print("Usage: extract <reponame> <filepath>")
+        return
+end
+ 
+extractRepository(shell.resolve(tArgs[1]), shell.resolve(tArgs[2]))
